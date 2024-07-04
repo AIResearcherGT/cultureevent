@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Events</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background-color: #f7f7f7;
+            color: #333;
+            text-align: center;
+        }
+        .container {
+            width: 90%;
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0px 10px 25px -5px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+        }
+        .form-group button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .form-group button:hover {
+            background-color: #c9302c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Event Form</h2>
+        <form>
+            <div class="form-group">
+                <label for="state">State</label>
+                <select id="state" name="state">
+                    <option value="">Select State</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="city">City</label>
+                <select id="city" name="city">
+                    <option value="">Select City</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="submit">Submit</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fetch the JSON file
+            fetch('static/state_city_list.json')
+                .then(response => response.json())
+                .then(data => {
+                    const stateCityData = data;
+                    const stateSelect = document.getElementById('state');
+                    const citySelect = document.getElementById('city');
+                    const stateCityMap = {};
+
+                    // Create a map of states to cities
+                    stateCityData.forEach(item => {
+                        if (!stateCityMap[item.State]) {
+                            stateCityMap[item.State] = [];
+                        }
+                        stateCityMap[item.State].push(item.City);
+                    });
+
+                    // Populate the state dropdown
+                    Object.keys(stateCityMap).forEach(state => {
+                        const option = new Option(state, state);
+                        stateSelect.options.add(option);
+                    });
+
+                    // Add event listener to update cities when state changes
+                    stateSelect.addEventListener('change', function() {
+                        const selectedState = this.value;
+                        const cities = stateCityMap[selectedState] || [];
+                        citySelect.innerHTML = '<option value="">Select City</option>'; // Clear existing options
+                        cities.forEach(city => {
+                            const option = new Option(city, city);
+                            citySelect.options.add(option);
+                        });
+                    });
+                })
+                .catch(error => console.error('Error fetching the state and city data:', error));
+        });
+    </script>
+</body>
+</html>

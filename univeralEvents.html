@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Events</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background-color: #f7f7f7;
+            color: #333;
+        }
+        .event-container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .event-header {
+            background: #FAFAFA;
+            padding: 20px;
+            border-bottom: 1px solid #E0E0E0;
+            display: flex;
+            justify-content: space-around;
+        }
+        .event-header h2 {
+            margin: 0;
+            font-size: 24px;
+            color: #000;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .event {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 10px 20px;
+            margin: 10px 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+        .event-date {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-right: 20px;
+            background: #007AFF;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            min-width: 60px;
+        }
+        .event-date span:first-child {
+            font-size: 22px;
+            font-weight: 600;
+        }
+        .event-date span:last-child {
+            font-size: 16px;
+            font-weight: 400;
+        }
+        .event-info {
+            flex-grow: 1;
+            text-align: left;
+        }
+        .event-title {
+            font-size: 18px;
+            color: #000;
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            text-align: left;
+        }
+        .event-details {
+            font-size: 14px;
+            color: #666;
+            margin: 0;
+        }
+        .event-category {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .event-category img {
+            width: 30px;
+            height: 30px;
+            margin-bottom: 5px;
+        }
+        .event-category span {
+            background: #ffcc00;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+        .event-details-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 10px 25px -5px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-width: 80%;
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+    <div class="event-container">
+        <div class="event-header">
+            <h2 onclick="loadEvents('all')">All Events</h2>
+            <h2 onclick="loadEvents('today')">Today's Events</h2>
+            <h2 onclick="loadEvents('upcoming')">Upcoming Events</h2>
+            <h2 onclick="loadEvents('past')">Past Events</h2>
+        </div>
+        <div id="events">
+            <!-- Events will be loaded here -->
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-overlay"></div>
+    <div class="event-details-modal" id="event-details-modal">
+        <!-- Event details will be loaded here -->
+    </div>
+
+    <script>
+        function loadEvents(category) {
+            let apiUrl = `https://web-production-71d9.up.railway.app/api/events`;
+            if (category !== 'all') {
+                apiUrl = `https://web-production-71d9.up.railway.app/api/${category}-events`;
+            }
+
+            $.ajax({
+                url: apiUrl,
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    $('#events').empty();
+                    if (data.length === 0) {
+                        $('#events').append("<p>No events found.</p>");
+                    } else {
+                        data.forEach(event => {
+                            let eventDate = new Date(event.start_date);
+                            let eventCard = `
+                            <div class="event" onclick="showEventDetails(${event.id})">
+                                <div class="event-date">
+                                    <span>${eventDate.getDate()}</span>
+                                    <span>${eventDate.toLocaleString('default', { month: 'short' }).toUpperCase()}</span>
+                                </div>
+                                <div class="event-info">
+                                    <div class="event-title">${event.title}</div>
+                                    <div class="event-details">Venue: ${event.venue}</div>
+                                    <div class="event-details">Time: ${event.start_time} - ${event.end_time}</div>
+                                </div>
+                                <div class="event-category">
+                                    <img src="your-category-icon.png" alt="Category">
+                                    <span>${event.category}</span>
+                                </div>
+                            </div>`;
+                            $('#events').append(eventCard);
+                        });
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error("An error occurred while fetching events:", status, error);
+                    $('#events').append("<p>Error loading events. Please try again later.</p>");
+                }
+            });
+        }
+
+        function showEventDetails(eventId) {
+            let apiUrl = `https://web-production-71d9.up.railway.app/api/events/${eventId}`;
+            $.ajax({
+                url: apiUrl,
+                type: 'GET',
+                dataType: 'json',
+                success: function (event) {
+                    let eventDetails = `
+                        <h2>${event.title || 'No Title'}</h2>
+                        <p><strong>Date:</strong> ${new Date(event.start_date).toLocaleDateString()}</p>
+                        <p><strong>Time:</strong> ${event.start_time} - ${event.end_time}</p>
+                        <p><strong>Venue:</strong> ${event.venue}</p>
+                        <p><strong>Description:</strong> ${event.description}</p>`;
+                    
+                    if (event.image_url) {
+                        eventDetails += `<img src="${event.image_url}" alt="Event Image" style="max-width: 100%; height: auto; margin-top: 10px;">`;
+                    }
+
+                    eventDetails += `<button onclick="closeEventDetails()">Close</button>`;
+
+                    $('#event-details-modal').html(eventDetails);
+                    $('#modal-overlay').show();
+                    $('#event-details-modal').show();
+                },
+                error: function (xhr, status, error) {
+                    console.error("An error occurred while fetching event details:", status, error);
+                }
+            });
+        }
+
+        function closeEventDetails() {
+            $('#modal-overlay').hide();
+            $('#event-details-modal').hide();
+        }
+
+        $(document).ready(function () {
+            loadEvents('all');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Events</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background-color: #f7f7f7;
+            color: #333;
+        }
+        .event-container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .event-header {
+            background: #FAFAFA;
+            padding: 20px;
+            border-bottom: 1px solid #E0E0E0;
+            display: flex;
+            justify-content: space-around;
+        }
+        .event-header h2 {
+            margin: 0;
+            font-size: 24px;
+            color: #000;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .event {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f9f9f9; /* Light gray background for contrast */
+            border-radius: 8px;
+            padding: 10px 20px;
+            margin: 10px 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .event-date {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-right: 20px;
+            background: #007AFF; /* iOS blue */
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            min-width: 60px; /* Fixed width for the date box */
+        }
+        .event-date span:first-child {
+            font-size: 22px;
+            font-weight: 600;
+        }
+        .event-date span:last-child {
+            font-size: 16px;
+            font-weight: 400;
+        }
+        .event-info {
+            flex-grow: 1;
+            text-align: left;
+        }
+        .event-title {
+            font-size: 18px;
+            color: #000;
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            text-align: left;
+        }
+        .event-details {
+            font-size: 14px;
+            color: #666;
+            margin: 0;
+        }
+        .event-category {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .event-category img {
+            width: 30px; /* Size of the icon */
+            height: 30px; /* Size of the icon */
+            margin-bottom: 5px;
+        }
+        .event-category span {
+            background: #ffcc00; /* Gold color */
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="event-container">
+        <div class="event-header">
+            <h2 onclick="loadEvents('all')">All Events</h2>
+            <h2 onclick="loadEvents('today')">Today's Events</h2>
+            <h2 onclick="loadEvents('upcoming')">Upcoming Events</h2>
+            <h2 onclick="loadEvents('past')">Past Events</h2>
+        </div>
+        <div id="events">
+            <!-- Events will be loaded here -->
+        </div>
+    </div>
+    <script>
+    function loadEvents(category) {
+        let apiUrl = `http://localhost:5000/api/events`;
+        if (category !== 'all') {
+            apiUrl = `http://localhost:5000/api/${category}-events`;
+        }
+
+        $.ajax({
+            url: apiUrl,
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                $('#events').empty();
+                data.forEach(event => {
+                    let eventDate = new Date(event.start_date); // Make sure your API gives 'start_date' in the right format
+                    let eventCard = `
+                    <div class="event">
+                        <div class="event-date">
+                            <span>${eventDate.getDate()}</span>
+                            <span>${eventDate.toLocaleString('default', { month: 'short' }).toUpperCase()}</span>
+                        </div>
+                        <div class="event-info">
+                            <div class="event-title">${event.title}</div>
+                            <div class="event-details">Venue: ${event.venue}</div>
+                            <div class="event-details">Time: ${event.start_time} - ${event.end_time}</div>
+                        </div>
+                        <div class="event-category">
+                            <img src="your-category-icon.png" alt="Category">
+                            <span>${event.category}</span> <!-- Add your category data -->
+                        </div>
+                    </div>`;
+                    $('#events').append(eventCard);
+                });
+            },
+            error: function (xhr, status, error) {
+                console.error("An error occurred while fetching events:", status, error);
+                $('#events').append("<p>Error loading events. Please try again later.</p>");
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        loadEvents('all');
+    });
+    </script>
+</body>
+</html>

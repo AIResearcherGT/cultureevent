@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Events</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background-color: #f7f7f7;
+            color: #333;
+            text-align: center;
+        }
+        .event-container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0px 10px 25px -5px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            padding: 20px;
+        }
+        .event-header {
+            background: #FAFAFA;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #E0E0E0;
+        }
+        .event-header h2 {
+            margin: 0;
+            font-size: 24px;
+            color: #000;
+            font-weight: 600;
+        }
+        .event {
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #E0E0E0;
+            padding: 20px;
+        }
+        .event:last-child {
+            border-bottom: none;
+        }
+        .event img {
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            margin-right: 20px;
+        }
+        .event-date {
+            background: #007AFF;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-right: 20px;
+            font-weight: 500;
+            min-width: 100px;
+            text-align: center;
+        }
+        .event-info {
+            flex-grow: 1;
+        }
+        .event-title {
+            font-size: 20px;
+            margin: 0;
+            color: #000;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .event-details {
+            font-size: 16px;
+            color: #666;
+            margin: 5px 0;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 5px;
+            width: 70%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .search-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .search-form input, .search-form select, .search-form button {
+            padding: 10px;
+            font-size: 16px;
+        }
+        .search-form button {
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .search-form button:hover {
+            background-color: #c9302c;
+        }
+    </style>
+</head>
+<body>
+    <div class="event-container">
+        <div class="event-header">
+            <h2>Ministry of Culture Events</h2>
+        </div>
+        <form class="search-form" id="search-form">
+            <input type="text" id="title" placeholder="Title">
+            <select id="state">
+                <option value="">Select State</option>
+            </select>
+            <select id="city">
+                <option value="">Select City</option>
+            </select>
+            <select id="category">
+                <option value="">Select Category</option>
+                <option value="Talk & Music">Talk & Music</option>
+                <!-- Add other categories as options -->
+            </select>
+            <input type="date" id="start_date" placeholder="From Date">
+            <input type="date" id="end_date" placeholder="To Date">
+            <button type="button" onclick="searchEvents()">Search</button>
+            <button type="reset">Reset</button>
+        </form>
+        <div id="events">
+            <!-- Events will be loaded here -->
+        </div>
+    </div>
+    <div id="event-details-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div id="event-details-content">
+                <!-- Event details will be loaded here -->
+            </div>
+        </div>
+    </div>
+    <script>
+    function showEventDetails(eventId) {
+        $.ajax({
+            url: `http://127.0.0.1:5000/api/events/${eventId}`,
+            type: 'GET',
+            dataType: 'json',
+            success: function (eventDetails) {
+                const modalContent = document.getElementById("event-details-content");
+                modalContent.innerHTML = `
+                    <h2>${eventDetails.title}</h2>
+                    <p><strong>Category:</strong> ${eventDetails.category}</p>
+                    <p><strong>Organization:</strong> ${eventDetails.organization_name || 'N/A'}</p>
+                    <p><strong>Description:</strong> ${eventDetails.description}</p>
+                    <p><strong>Start Date:</strong> ${eventDetails.start_date}</p>
+                    <p><strong>Start Time:</strong> ${eventDetails.start_time}</p>
+                    <p><strong>End Date:</strong> ${eventDetails.end_date}</p>
+                    <p><strong>End Time:</strong> ${eventDetails.end_time}</p>
+                    <p><strong>State:</strong> ${eventDetails.state}</p>
+                    <p><strong>City:</strong> ${eventDetails.city}</p>
+                    <p><strong>Venue:</strong> ${eventDetails.venue || 'N/A'}</p>
+                `;
+                const modal = document.getElementById("event-details-modal");
+                modal.style.display = "block";
+            },
+            error: function (xhr, status, error) {
+                console.error("An error occurred while fetching event details:", status, error);
+            }
+        });
+    }
+
+    function closeModal() {
+        const modal = document.getElementById("event-details-modal");
+        modal.style.display = "none";
+    }
+
+    async function searchEvents() {
+        const title = document.getElementById('title').value;
+        const state = document.getElementById('state').value;
+        const city = document.getElementById('city').value;
+        const category = document.getElementById('category').value;
+        const startDate = document.getElementById('start_date').value;
+        const endDate = document.getElementById('end_date').value;
+
+        const queryParams = new URLSearchParams({
+            title, state, city, category, start_date: startDate, end_date: endDate
+        });
+
+        const response = await fetch(`http://127.0.0.1:5000/api/all-events?${queryParams}`);
+        const events = await response.json();
+        console.log("Events received:", events);  // Debugging line
+
+        const eventsList = document.getElementById('events');
+        eventsList.innerHTML = events.map(event => `
+            <div class="event">
+                <div class="event-date">${new Date(event.start_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short' }).toUpperCase()}</div>
+                ${event.image_url ? `<img src="${event.image_url}" alt="${event.title}">` : '<img src="path/to/default-image.png" alt="Default Image">'}
+                <div class="event-info">
+                    <h3 class="event-title" onclick="showEventDetails(${event.id})">${event.title}</h3>
+                    <p class="event-details"><strong>Time:</strong> ${event.start_time} - ${event.end_time}</p>
+                    <p class="event-details">${event.state}, ${event.city}</p>
+                    <p class="event-details"><strong>Organization:</strong> ${event.organization_name || 'N/A'}</p>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    $(document).ready(function () {
+        // Fetch the states and cities from the JSON file and populate the dropdowns
+        fetch('{{ url_for("static", filename="state_city_list.json") }}')
+            .then(response => response.json())
+            .then(data => {
+                const stateDropdown = $('#state');
+                const cityDropdown = $('#city');
+
+                const states = [...new Set(data.map(item => item.State))];
+                states.forEach(state => {
+                    stateDropdown.append(new Option(state, state));
+                });
+
+                stateDropdown.on('change', function () {
+                    const selectedState = this.value;
+                    const cities = data.filter(item => item.State === selectedState).map(item => item.City);
+
+                    cityDropdown.empty().append(new Option('Select City', ''));
+                    cities.forEach(city => {
+                        cityDropdown.append(new Option(city, city));
+                    });
+                });
+            })
+            .catch(error => {
+                console.error('Error loading states and cities:', error);
+            });
+
+        // Load all non-archived events initially
+        searchEvents();
+    });
+    </script>
+</body>
+</html>

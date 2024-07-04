@@ -1,0 +1,9 @@
+SQLAlchemy>=2.0.16
+Flask
+flask-cors
+flask-sqlalchemy
+
+
+
+
+
